@@ -109,10 +109,10 @@ class LidlPlusApi:
         profile = webdriver.FirefoxProfile()
         profile.set_preference("general.useragent.override", user_agent)
         return webdriver.Firefox(
-            executable_path=GeckoDriverManager().install(),
-            firefox_binary="/usr/bin/firefox",
+#            executable_path=GeckoDriverManager().install(),
+#            firefox_binary="/usr/bin/firefox",
             options=options,
-            firefox_profile=profile,
+#            firefox_profile=profile,
         )
 
     def _get_browser(self, headless=True):
@@ -216,16 +216,11 @@ class LidlPlusApi:
         browser = self._get_browser(headless=kwargs.get("headless", True))
         browser.get(self._register_link)
         wait = WebDriverWait(browser, 10)
-        wait.until(expected_conditions.visibility_of_element_located((By.ID, "button_welcome_login"))).click()
-        wait.until(expected_conditions.visibility_of_element_located((By.NAME, "EmailOrPhone"))).send_keys(phone)
-        self._click(browser, (By.ID, "button_btn_submit_email"))
-        self._click(
-            browser,
-            (By.ID, "button_btn_submit_email"),
-            request=f"{self._AUTH_API}/api/phone/exists.*",
-        )
-        wait.until(expected_conditions.element_to_be_clickable((By.ID, "field_Password"))).send_keys(password)
-        self._click(browser, (By.ID, "button_submit"))
+        wait.until(expected_conditions.visibility_of_element_located((By.XPATH, '//*[@id="duple-button-block"]/button[1]/span'))).click()
+
+        wait.until(expected_conditions.element_to_be_clickable((By.NAME, "input-email"))).send_keys(phone)
+        wait.until(expected_conditions.element_to_be_clickable((By.NAME, "Password"))).send_keys(password)
+        self._click(browser, (By.XPATH, '//*[@id="duple-button-block"]/button'))
         self._check_login_error(browser)
         self._check_2fa_auth(
             browser,
@@ -270,16 +265,12 @@ class LidlPlusApi:
     def ticket(self, ticket_id):
         """Get full data of single ticket by id"""
         kwargs = {"headers": self._default_headers(), "timeout": self._TIMEOUT}
-        url = f"{self._TICKET_API}/v2/{self._country}/tickets/{ticket_id}"
-        try:
-            return requests.get(url, **kwargs).json()
-        except JSONDecodeError:
-            url = f"{self._TICKET_API}/v3/{self._country}/tickets/{ticket_id}"
-            receipt_json = requests.get(url, **kwargs).json()
-            return parse_html_receipt(
-                date=receipt_json["date"],
-                html_receipt=receipt_json["htmlPrintedReceipt"],
-            )
+        url = f"{self._TICKET_API}/v3/{self._country}/tickets/{ticket_id}"
+        receipt_json = requests.get(url, **kwargs).json()
+        return parse_html_receipt(
+            date=receipt_json["date"],
+            html_receipt=receipt_json["htmlPrintedReceipt"],
+        )
 
     def coupon_promotions_v1(self):
         """Get list of all coupons API V1"""

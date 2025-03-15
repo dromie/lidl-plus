@@ -48,14 +48,14 @@ def parse_html_receipt(date: str, html_receipt: str) -> dict[str, Any]:
             receipt["itemsLine"].append(
                 {
                     "name": node.attrib["data-art-description"],
-                    "currentUnitPrice": node.attrib["data-unit-price"],
+                    "currentUnitPrice": parse_float(node.attrib["data-unit-price"]),
                     "isWeight": is_weight,
                     "quantity": quantity,
                     "discounts": [],
                 }
             )
         elif node.attrib["class"] == "discount":
-            discount = abs(parse_float(node.text.split()[-1]))
+            discount = abs(parse_float(node.text.split()[-2]))
             receipt["itemsLine"][-1]["discounts"].append({"amount": str(discount).replace(".", ",")})
 
     return receipt
